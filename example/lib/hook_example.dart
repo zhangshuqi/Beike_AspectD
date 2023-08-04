@@ -46,7 +46,6 @@ class FieldInitializerDemo {
 ////    ResizeImage.resizeIfNeeded(100, 50, NetworkImage(src, scale: scale, headers: headers));
 //
 //  }
-
 }
 
 @Aspect()
@@ -63,13 +62,13 @@ class CallDemo {
     pointcut.proceed();
   }
 
-  // @Call('package:example/main.dart', 'TextRightImageModel', '-.*',
-  //     isRegex: true)
-  // @pragma("vm:entry-point")
-  // dynamic _aop_Two(PointCut pointcut) {
-  //   print('_aop_Two');
-  //   return pointcut.proceed();
-  // }
+// @Call('package:example/main.dart', 'TextRightImageModel', '-.*',
+//     isRegex: true)
+// @pragma("vm:entry-point")
+// dynamic _aop_Two(PointCut pointcut) {
+//   print('_aop_Two');
+//   return pointcut.proceed();
+// }
 
 // //类静态方法
 // @Call("package:example/main.dart", "_MyHomePageState", "+testFunction")
@@ -333,7 +332,7 @@ class AddDemo {
 
   @Add("package:example/receiver_test.dart", "Receiver")
   @pragma("vm:entry-point")
-  dynamic addTest(PointCut pointCut, int j, {String s, int i}) {
+  dynamic addTest(PointCut pointCut, int j, {String? s, int? i}) {
     print('[beike_aspectd]: Add method');
   }
 
@@ -342,7 +341,6 @@ class AddDemo {
 // void addTestRegular(PointCut pointCut) {
 //   print('Regular add method');
 // }
-
 }
 
 @Aspect()
