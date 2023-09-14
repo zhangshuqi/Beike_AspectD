@@ -29,8 +29,19 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  kernel: any
 
-
+dependency_overrides:
+  kernel:
+    git:
+      url: https://github.com/dart-lang/sdk.git
+      ref: 2.19.6
+      path: pkg/kernel
+  meta:
+    git:
+      url: https://github.com/dart-lang/sdk.git
+      ref: 2.19.6
+      path: pkg/meta
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

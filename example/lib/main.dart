@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:beike_aspectd/aspectd.dart';
+import 'click_aop_hook.dart';
 // ignore: unused_import
 import 'package:example/hook_example.dart';
 import 'package:flutter/material.dart';
@@ -207,6 +208,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 // dynamicO.addTestRegular(null);
                 // receiver2.addTest(null, '111', s:'777', i:8);
                 print(_receiver6);
+                print("onPluginDemo");
 
                 // dynamic d2 = this;
                 // d2.addTest();
