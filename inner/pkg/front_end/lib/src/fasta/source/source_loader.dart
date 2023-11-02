@@ -5,14 +5,13 @@
 library fasta.source_loader;
 
 import 'dart:collection' show Queue;
-import 'dart:convert' show utf8;
+import 'dart:convert' show Utf8Encoder;
 import 'dart:typed_data' show Uint8List;
-
-import 'package:_fe_analyzer_shared/src/parser/forwarding_listener.dart'
-    show ForwardingListener;
 
 import 'package:_fe_analyzer_shared/src/parser/class_member_parser.dart'
     show ClassMemberParser;
+import 'package:_fe_analyzer_shared/src/parser/forwarding_listener.dart'
+    show ForwardingListener;
 import 'package:_fe_analyzer_shared/src/parser/parser.dart'
     show Parser, lengthForToken;
 import 'package:_fe_analyzer_shared/src/scanner/scanner.dart'
@@ -45,18 +44,14 @@ import '../../base/instrumentation.dart' show Instrumentation;
 import '../../base/nnbd_mode.dart';
 import '../builder/builder.dart';
 import '../builder/class_builder.dart';
-import '../builder/declaration_builder.dart';
 import '../builder/extension_builder.dart';
-import '../builder/field_builder.dart';
 import '../builder/invalid_type_declaration_builder.dart';
 import '../builder/library_builder.dart';
 import '../builder/member_builder.dart';
-import '../builder/modifier_builder.dart';
 import '../builder/name_iterator.dart';
 import '../builder/named_type_builder.dart';
 import '../builder/omitted_type_builder.dart';
 import '../builder/prefix_builder.dart';
-import '../builder/procedure_builder.dart';
 import '../builder/type_alias_builder.dart';
 import '../builder/type_builder.dart';
 import '../builder/type_declaration_builder.dart';
@@ -68,6 +63,7 @@ import '../export.dart' show Export;
 import '../fasta_codes.dart';
 import '../import_chains.dart';
 import '../kernel/body_builder.dart' show BodyBuilder;
+import '../kernel/body_builder_context.dart';
 import '../kernel/hierarchy/class_member.dart';
 import '../kernel/hierarchy/delayed.dart';
 import '../kernel/hierarchy/hierarchy_builder.dart';
@@ -76,8 +72,8 @@ import '../kernel/hierarchy/members_builder.dart';
 import '../kernel/kernel_helper.dart'
     show DelayedDefaultValueCloner, TypeDependency;
 import '../kernel/kernel_target.dart' show KernelTarget;
-import '../kernel/macro/macro.dart';
 import '../kernel/macro/annotation_parser.dart';
+import '../kernel/macro/macro.dart';
 import '../kernel/type_builder_computer.dart' show TypeBuilderComputer;
 import '../loader.dart' show Loader, untranslatableUriScheme;
 import '../problems.dart' show internalProblem;
@@ -86,8 +82,8 @@ import '../ticker.dart' show Ticker;
 import '../type_inference/type_inference_engine.dart';
 import '../type_inference/type_inferrer.dart';
 import '../uri_offset.dart';
-import '../util/helpers.dart';
 import '../uris.dart';
+import '../util/helpers.dart';
 import 'diet_listener.dart' show DietListener;
 import 'diet_parser.dart' show DietParser, useImplicitCreationExpressionInCfe;
 import 'name_scheme.dart';
@@ -116,7 +112,7 @@ class SourceLoader extends Loader {
   /// Whether comments should be scanned and parsed.
   final bool includeComments;
 
-  final Map<Uri, List<int>> sourceBytes = <Uri, List<int>>{};
+  final Map<Uri, Uint8List> sourceBytes = <Uri, Uint8List>{};
 
   ClassHierarchyBuilder? _hierarchyBuilder;
 
@@ -416,10 +412,7 @@ class SourceLoader extends Loader {
     Message? packageLanguageVersionProblem;
     if (packageForLanguageVersion != null) {
       Uri importUri = origin?.importUri ?? uri;
-      if (!importUri.isScheme('dart') &&
-          !importUri.isScheme('package') &&
-          // ignore: unnecessary_null_comparison
-          packageForLanguageVersion.name != null) {
+      if (!importUri.isScheme('dart') && !importUri.isScheme('package')) {
         packageUri =
             new Uri(scheme: 'package', path: packageForLanguageVersion.name);
       }
@@ -786,13 +779,12 @@ severity: $severity
 
   BodyBuilder createBodyBuilderForOutlineExpression(
       SourceLibraryBuilder library,
-      DeclarationBuilder? declarationBuilder,
-      ModifierBuilder member,
+      BodyBuilderContext bodyBuilderContext,
       Scope scope,
       Uri fileUri,
       {Scope? formalParameterScope}) {
     return new BodyBuilder.forOutlineExpression(
-        library, declarationBuilder, member, scope, fileUri,
+        library, bodyBuilderContext, scope, fileUri,
         formalParameterScope: formalParameterScope);
   }
 
@@ -842,7 +834,7 @@ severity: $severity
     Uri fileUri = libraryBuilder.fileUri;
 
     // Lookup the file URI in the cache.
-    List<int>? bytes = sourceBytes[fileUri];
+    Uint8List? bytes = sourceBytes[fileUri];
 
     if (bytes == null) {
       // Error recovery.
@@ -941,6 +933,8 @@ severity: $severity
         // and the VM does not support that. Also, what would, for instance,
         // setting a breakpoint on line 42 of some import uri mean, if the uri
         // represented several files?
+        // TODO(johnniwinther): Replace this with something that supports
+        // augmentation libraries.
         List<String> newPathSegments =
             new List<String>.of(importUri.pathSegments);
         newPathSegments.add(libraryBuilder.fileUri.pathSegments.last);
@@ -964,27 +958,15 @@ severity: $severity
     return token;
   }
 
-  List<int> synthesizeSourceForMissingFile(Uri uri, Message? message) {
-    switch ("$uri") {
-      case "dart:core":
-        return utf8.encode(defaultDartCoreSource);
-
-      case "dart:async":
-        return utf8.encode(defaultDartAsyncSource);
-
-      case "dart:collection":
-        return utf8.encode(defaultDartCollectionSource);
-
-      case "dart:_internal":
-        return utf8.encode(defaultDartInternalSource);
-
-      case "dart:typed_data":
-        return utf8.encode(defaultDartTypedDataSource);
-
-      default:
-        return utf8
-            .encode(message == null ? "" : "/* ${message.problemMessage} */");
-    }
+  Uint8List synthesizeSourceForMissingFile(Uri uri, Message? message) {
+    return const Utf8Encoder().convert(switch ("$uri") {
+      "dart:core" => defaultDartCoreSource,
+      "dart:async" => defaultDartAsyncSource,
+      "dart:collection" => defaultDartCollectionSource,
+      "dart:_internal" => defaultDartInternalSource,
+      "dart:typed_data" => defaultDartTypedDataSource,
+      _ => message == null ? "" : "/* ${message.problemMessage} */",
+    });
   }
 
   Set<LibraryBuilder>? _strongOptOutLibraries;
@@ -1210,8 +1192,6 @@ severity: $severity
 
   Future<Null> buildOutline(SourceLibraryBuilder library) async {
     Token tokens = await tokenize(library);
-    // ignore: unnecessary_null_comparison
-    if (tokens == null) return;
     OutlineBuilder listener = new OutlineBuilder(library);
     new ClassMemberParser(listener,
             allowPatterns: library.libraryFeatures.patterns.isEnabled)
@@ -1234,15 +1214,15 @@ severity: $severity
     // second time, and the first time was in [buildOutline] above. So this
     // time we suppress lexical errors.
     Token tokens = await tokenize(library, suppressLexicalErrors: true);
-    // ignore: unnecessary_null_comparison
-    if (tokens == null) {
-      return;
-    }
 
     if (target.benchmarker != null) {
       // When benchmarking we do extra parsing on it's own to get a timing of
       // how much time is spent on the actual parsing (as opposed to the
       // building of what's parsed).
+      // NOTE: This runs the parser over the token stream meaning that any
+      // parser recovery rewriting the token stream will have happened once
+      // the "real" parsing is done. This in turn means that some errors
+      // (e.g. missing semi-colon) will not be issued when benchmarking.
       {
         target.benchmarker?.beginSubdivide(
             BenchmarkSubdivides.body_buildBody_benchmark_specific_diet_parser);
@@ -1272,11 +1252,8 @@ severity: $severity
       }
       Token tokens = await tokenize(part as SourceLibraryBuilder,
           suppressLexicalErrors: true);
-      // ignore: unnecessary_null_comparison
-      if (tokens != null) {
-        listener.uri = part.fileUri;
-        parser.parseUnit(tokens);
-      }
+      listener.uri = part.fileUri;
+      parser.parseUnit(tokens);
     }
   }
 
@@ -1308,7 +1285,7 @@ severity: $severity
               "debugExpression in extension $enclosingClassOrExtension");
       }
     }
-    ProcedureBuilder builder = new SourceProcedureBuilder(
+    SourceProcedureBuilder builder = new SourceProcedureBuilder(
         /* metadata = */ null,
         /* modifier flags = */ 0,
         const ImplicitTypeBuilder(),
@@ -1331,8 +1308,10 @@ severity: $severity
             libraryName: libraryBuilder.libraryName))
       ..parent = parent;
     BodyBuilder listener = dietListener.createListener(
-        builder, dietListener.memberScope,
-        isDeclarationInstanceMember: isClassInstanceMember,
+        new ExpressionCompilerProcedureBodyBuildContext(dietListener, builder,
+            isDeclarationInstanceMember: isClassInstanceMember),
+        builder,
+        dietListener.memberScope,
         thisVariable: extensionThis);
     for (VariableDeclaration variable in parameters.positionalParameters) {
       listener.typeInferrer.assignedVariables.declare(variable);
@@ -1426,19 +1405,6 @@ severity: $severity
         exportees.add(library);
         for (Export exporter in library.exporters) {
           exporters.add(exporter.exporter);
-        }
-      }
-
-      Iterable<SourceLibraryBuilder>? patches =
-          library is SourceLibraryBuilder ? library.patchLibraries : null;
-      if (patches != null) {
-        for (SourceLibraryBuilder patchLibrary in patches) {
-          if (patchLibrary.exporters.isNotEmpty) {
-            exportees.add(patchLibrary);
-            for (Export exporter in patchLibrary.exporters) {
-              exporters.add(exporter.exporter);
-            }
-          }
         }
       }
     }
@@ -1696,6 +1662,8 @@ severity: $severity
     }
     return null;
   }
+
+  Class? get macroClass => _macroClassBuilder?.cls;
 
   Future<MacroApplications?> computeMacroApplications() async {
     if ((!enableMacros || _macroClassBuilder == null) && !forceEnableMacros) {
@@ -2300,23 +2268,53 @@ severity: $severity
         if (!superclass.isBase &&
             !superclass.isFinal &&
             !superclass.isSealed &&
-            !superclass.cls.isAnonymousMixin) {
+            !superclass.cls.isAnonymousMixin &&
+            superclass.libraryBuilder.library.languageVersion >=
+                ExperimentalFlag.classModifiers.experimentEnabledVersion) {
           // Only report an error on the nearest subtype that does not fulfill
           // the base or final subtype restriction.
           return;
         }
 
         if (baseOrFinalSuperClass.isFinal) {
+          // Don't check base and final subtyping restriction if the supertype
+          // is a final type used outside of its library.
+          if (cls.libraryBuilder.origin !=
+              baseOrFinalSuperClass.libraryBuilder.origin) {
+            // In the special case where the 'baseOrFinalSuperClass' is a core
+            // library class and we are indirectly subtyping from a superclass
+            // that's from a pre-feature library, we want to produce a final
+            // transitivity error.
+            //
+            // For implements clauses with the above scenario, we avoid
+            // over-reporting since there will already be a
+            // [FinalClassImplementedOutsideOfLibrary] error.
+            //
+            // TODO(kallentu): Avoid over-reporting for with clauses.
+            if (baseOrFinalSuperClass.libraryBuilder.origin ==
+                    superclass.libraryBuilder.origin ||
+                !baseOrFinalSuperClass.libraryBuilder.importUri
+                    .isScheme("dart") ||
+                implementsBuilder != null) {
+              return;
+            }
+          }
+          final Template<Message Function(String, String)> template =
+              cls.isMixinDeclaration
+                  ? templateMixinSubtypeOfFinalIsNotBase
+                  : templateSubtypeOfFinalIsNotBaseFinalOrSealed;
           cls.addProblem(
-              templateSubtypeOfFinalIsNotBaseFinalOrSealed.withArguments(
-                  cls.fullNameForErrors,
+              template.withArguments(cls.fullNameForErrors,
                   baseOrFinalSuperClass.fullNameForErrors),
               cls.charOffset,
               noLength);
         } else if (baseOrFinalSuperClass.isBase) {
+          final Template<Message Function(String, String)> template =
+              cls.isMixinDeclaration
+                  ? templateMixinSubtypeOfBaseIsNotBase
+                  : templateSubtypeOfBaseIsNotBaseFinalOrSealed;
           cls.addProblem(
-              templateSubtypeOfBaseIsNotBaseFinalOrSealed.withArguments(
-                  cls.fullNameForErrors,
+              template.withArguments(cls.fullNameForErrors,
                   baseOrFinalSuperClass.fullNameForErrors),
               cls.charOffset,
               noLength);
@@ -2329,15 +2327,9 @@ severity: $severity
       final TypeDeclarationBuilder? supertypeDeclaration =
           unaliasDeclaration(supertypeBuilder);
       if (supertypeDeclaration is ClassBuilder) {
-        if (isClassModifiersEnabled(supertypeDeclaration)) {
-          if (cls.libraryBuilder.origin ==
-                  supertypeDeclaration.libraryBuilder.origin ||
-              !supertypeDeclaration.isFinal) {
-            // Don't check base and final subtyping restriction if the supertype
-            // is a final type used outside of its library.
-            checkForBaseFinalRestriction(supertypeDeclaration);
-          }
+        checkForBaseFinalRestriction(supertypeDeclaration);
 
+        if (isClassModifiersEnabled(supertypeDeclaration)) {
           if (cls.libraryBuilder.origin !=
                   supertypeDeclaration.libraryBuilder.origin &&
               !mayIgnoreClassModifiers(supertypeDeclaration)) {
@@ -2384,15 +2376,9 @@ severity: $severity
       final TypeDeclarationBuilder? mixedInTypeDeclaration =
           unaliasDeclaration(mixedInTypeBuilder);
       if (mixedInTypeDeclaration is ClassBuilder) {
-        if (isClassModifiersEnabled(mixedInTypeDeclaration)) {
-          if (cls.libraryBuilder.origin ==
-                  mixedInTypeDeclaration.libraryBuilder.origin ||
-              !mixedInTypeDeclaration.isFinal) {
-            // Don't check base and final subtyping restriction if the supertype
-            // is a final type used outside of its library.
-            checkForBaseFinalRestriction(mixedInTypeDeclaration);
-          }
+        checkForBaseFinalRestriction(mixedInTypeDeclaration);
 
+        if (isClassModifiersEnabled(mixedInTypeDeclaration)) {
           // Check for classes being used as mixins. Only classes declared with
           // a 'mixin' modifier are allowed to be mixed in.
           if (cls.isMixinApplication &&
@@ -2427,79 +2413,55 @@ severity: $severity
         final TypeDeclarationBuilder? interfaceDeclaration =
             unaliasDeclaration(interfaceBuilder);
         if (interfaceDeclaration is ClassBuilder) {
-          if (isClassModifiersEnabled(interfaceDeclaration)) {
-            if (cls.libraryBuilder.origin ==
-                    interfaceDeclaration.libraryBuilder.origin ||
-                !interfaceDeclaration.isFinal) {
-              // Don't check base and final subtyping restriction if the
-              // supertype is a final type used outside of its library.
-              checkForBaseFinalRestriction(interfaceDeclaration,
-                  implementsBuilder: interfaceBuilder);
-            }
+          checkForBaseFinalRestriction(interfaceDeclaration,
+              implementsBuilder: interfaceBuilder);
 
-            ClassBuilder? checkedClass = interfaceDeclaration;
-            while (checkedClass != null) {
-              if (cls.libraryBuilder.origin !=
-                      checkedClass.libraryBuilder.origin &&
-                  !mayIgnoreClassModifiers(checkedClass)) {
+          ClassBuilder? checkedClass = interfaceDeclaration;
+          while (checkedClass != null) {
+            if (cls.libraryBuilder.origin !=
+                    checkedClass.libraryBuilder.origin &&
+                !mayIgnoreClassModifiers(checkedClass)) {
+              final List<LocatedMessage> context = [
+                if (checkedClass != interfaceDeclaration)
+                  templateBaseOrFinalClassImplementedOutsideOfLibraryCause
+                      .withArguments(interfaceDeclaration.fullNameForErrors,
+                          checkedClass.fullNameForErrors)
+                      .withLocation(checkedClass.fileUri,
+                          checkedClass.charOffset, noLength)
+              ];
+
+              if (checkedClass.isBase && !cls.cls.isAnonymousMixin) {
                 // Report an error for a class implementing a base class outside
                 // of its library.
-                if (checkedClass.isBase && !cls.cls.isAnonymousMixin) {
-                  if (checkedClass.isMixinDeclaration) {
-                    cls.addProblem(
-                        templateBaseMixinImplementedOutsideOfLibrary
-                            .withArguments(checkedClass.fullNameForErrors),
-                        interfaceBuilder.charOffset ?? TreeNode.noOffset,
-                        noLength,
-                        context: [
-                          if (checkedClass != interfaceDeclaration)
-                            templateBaseClassImplementedOutsideOfLibraryCause
-                                .withArguments(
-                                    interfaceDeclaration.fullNameForErrors,
-                                    checkedClass.fullNameForErrors)
-                                .withLocation(checkedClass.fileUri,
-                                    checkedClass.charOffset, noLength)
-                        ]);
-                  } else {
-                    cls.addProblem(
-                        templateBaseClassImplementedOutsideOfLibrary
-                            .withArguments(checkedClass.fullNameForErrors),
-                        interfaceBuilder.charOffset ?? TreeNode.noOffset,
-                        noLength,
-                        context: [
-                          if (checkedClass != interfaceDeclaration)
-                            templateBaseClassImplementedOutsideOfLibraryCause
-                                .withArguments(
-                                    interfaceDeclaration.fullNameForErrors,
-                                    checkedClass.fullNameForErrors)
-                                .withLocation(checkedClass.fileUri,
-                                    checkedClass.charOffset, noLength)
-                        ]);
-                  }
-                  // Break to only report one error.
-                  break;
-                } else if (checkedClass.isFinal &&
-                    checkedClass == interfaceDeclaration) {
-                  if (cls.cls.isAnonymousMixin) {
-                    cls.addProblem(
-                        templateFinalClassUsedAsMixinConstraintOutsideOfLibrary
-                            .withArguments(
-                                interfaceDeclaration.fullNameForErrors),
-                        interfaceBuilder.charOffset ?? TreeNode.noOffset,
-                        noLength);
-                  } else {
-                    cls.addProblem(
-                        templateFinalClassImplementedOutsideOfLibrary
-                            .withArguments(
-                                interfaceDeclaration.fullNameForErrors),
-                        interfaceBuilder.charOffset ?? TreeNode.noOffset,
-                        noLength);
-                  }
-                  break;
-                }
+                final Template<Message Function(String)> template =
+                    checkedClass.isMixinDeclaration
+                        ? templateBaseMixinImplementedOutsideOfLibrary
+                        : templateBaseClassImplementedOutsideOfLibrary;
+                cls.addProblem(
+                    template.withArguments(checkedClass.fullNameForErrors),
+                    interfaceBuilder.charOffset ?? TreeNode.noOffset,
+                    noLength,
+                    context: context);
+                // Break to only report one error.
+                break;
+              } else if (checkedClass.isFinal) {
+                // Report an error for a class implementing a final class
+                // outside of its library.
+                final Template<Message Function(String)> template = cls
+                            .cls.isAnonymousMixin &&
+                        checkedClass == interfaceDeclaration
+                    ? templateFinalClassUsedAsMixinConstraintOutsideOfLibrary
+                    : templateFinalClassImplementedOutsideOfLibrary;
+                cls.addProblem(
+                    template.withArguments(checkedClass.fullNameForErrors),
+                    interfaceBuilder.charOffset ?? TreeNode.noOffset,
+                    noLength,
+                    context: context);
+                // Break to only report one error.
+                break;
               }
-              checkedClass = classToBaseOrFinalSuperClass[checkedClass];
             }
+            checkedClass = classToBaseOrFinalSuperClass[checkedClass];
           }
 
           // Report error for implementing a sealed class or a sealed mixin
@@ -3057,8 +3019,13 @@ severity: $severity
   }
 
   BodyBuilder createBodyBuilderForField(
-      FieldBuilder field, TypeInferrer typeInferrer) {
-    return new BodyBuilder.forField(field, typeInferrer);
+      SourceLibraryBuilder libraryBuilder,
+      BodyBuilderContext bodyBuilderContext,
+      Scope enclosingScope,
+      TypeInferrer typeInferrer,
+      Uri uri) {
+    return new BodyBuilder.forField(
+        libraryBuilder, bodyBuilderContext, enclosingScope, typeInferrer, uri);
   }
 }
 
@@ -3155,7 +3122,10 @@ abstract class Enum {
 }
 
 abstract class _Enum {
+  final int index;
   final String _name;
+
+  const _Enum(this.index, this._name);
 }
 
 class String {}
