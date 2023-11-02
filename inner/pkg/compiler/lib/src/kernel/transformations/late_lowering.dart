@@ -187,11 +187,11 @@ class LateLowering {
     _backingInstanceFields.clear();
   }
 
-  void enterFunction() {
+  void enterScope() {
     _variableCells.add(null);
   }
 
-  void exitFunction() {
+  void exitScope() {
     _variableCells.removeLast();
   }
 
@@ -332,7 +332,11 @@ class LateLowering {
           fileUri: fileUri,
           fieldReference: field.fieldReference)
         ..fileOffset = fileOffset
-        ..isNonNullableByDefault = true;
+        ..isNonNullableByDefault = true
+        // TODO(fishythefish,srujzs,johnniwinther): Also mark the getter/setter
+        //  as extension/inline class members.
+        ..isExtensionMember = field.isExtensionMember
+        ..isInlineClassMember = field.isInlineClassMember;
       StaticGet fieldCellAccess() =>
           StaticGet(fieldCell)..fileOffset = fileOffset;
 
