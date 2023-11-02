@@ -117,6 +117,7 @@ import 'type_info.dart'
         computeType,
         computeTypeParamOrArg,
         computeVariablePatternType,
+        illegalPatternIdentifiers,
         isValidNonRecordTypeReference,
         noType,
         noTypeParamOrArg;
@@ -547,9 +548,10 @@ class Parser {
           optional('late', next) ||
           (optional('final', next) &&
               (!optional('class', next.next!) &&
-                  !optional('mixin', next.next!))) ||
-          // Ignore using 'final' as a modifier for a class or a mixin, but
-          // allow in other contexts.
+                  !optional('mixin', next.next!) &&
+                  !optional('enum', next.next!))) ||
+          // Ignore using 'final' as a modifier for a class, a mixin, or an
+          // enum, but allow in other contexts.
           (optional('const', next) && !optional('class', next.next!))) {
         // Ignore `const class` so that it is reported below as an invalid
         // modifier on a class.
@@ -578,7 +580,9 @@ class Parser {
       next = next.next!;
     } else if (next.isIdentifier && optional('sealed', next)) {
       sealedToken = next;
-      if (optional('class', next.next!) || optional('mixin', next.next!)) {
+      if (optional('class', next.next!) ||
+          optional('mixin', next.next!) ||
+          optional('enum', next.next!)) {
         next = next.next!;
       } else if (optional('abstract', next.next!) &&
           optional('class', next.next!.next!)) {
@@ -589,12 +593,16 @@ class Parser {
       }
     } else if (next.isIdentifier && optional('base', next)) {
       baseToken = next;
-      if (optional('class', next.next!) || optional('mixin', next.next!)) {
+      if (optional('class', next.next!) ||
+          optional('mixin', next.next!) ||
+          optional('enum', next.next!)) {
         next = next.next!;
       }
     } else if (next.isIdentifier && optional('interface', next)) {
       interfaceToken = next;
-      if (optional('class', next.next!) || optional('mixin', next.next!)) {
+      if (optional('class', next.next!) ||
+          optional('mixin', next.next!) ||
+          optional('enum', next.next!)) {
         next = next.next!;
       }
       // TODO(kallentu): Handle incorrect ordering of modifiers.
@@ -666,6 +674,19 @@ class Parser {
       directiveState?.checkDeclaration();
       ModifierContext context = new ModifierContext(this);
       context.parseEnumModifiers(start, keyword);
+      // Enums can't declare any explicit modifier.
+      if (baseToken != null) {
+        reportRecoverableError(baseToken, codes.messageBaseEnum);
+      }
+      if (context.finalToken != null) {
+        reportRecoverableError(context.finalToken!, codes.messageFinalEnum);
+      }
+      if (interfaceToken != null) {
+        reportRecoverableError(interfaceToken, codes.messageInterfaceEnum);
+      }
+      if (sealedToken != null) {
+        reportRecoverableError(sealedToken, codes.messageSealedEnum);
+      }
       return parseEnum(keyword);
     } else {
       // The remaining top level keywords are built-in keywords
@@ -1876,8 +1897,6 @@ class Parser {
   /// ```
   Token parseFormalParameter(
       Token token, FormalParameterKind parameterKind, MemberKind memberKind) {
-    // ignore: unnecessary_null_comparison
-    assert(parameterKind != null);
     token = parseMetadataStar(token);
 
     Token? skippedNonRequiredRequired;
@@ -2928,6 +2947,13 @@ class Parser {
         }
       }
 
+      if (optional("with", token.next!)) {
+        Token withKeyword = token.next!;
+        reportRecoverableError(token.next!, codes.messageMixinWithClause);
+        token = parseTypeList(withKeyword);
+        listener.handleMixinWithClause(withKeyword);
+      }
+
       listener.handleRecoverMixinHeader();
 
       // Exit if a mixin body is detected, or if no progress has been made
@@ -3131,14 +3157,10 @@ class Parser {
   /// identifier in the given [context], create a synthetic identifier, report
   /// an error, and return the synthetic identifier.
   Token ensureIdentifier(Token token, IdentifierContext context) {
-    // ignore: unnecessary_null_comparison
-    assert(context != null);
     _tryRewriteNewToIdentifier(token, context);
     Token identifier = token.next!;
     if (identifier.kind != IDENTIFIER_TOKEN) {
       identifier = context.ensureIdentifier(token, this);
-      // ignore: unnecessary_null_comparison
-      assert(identifier != null);
       assert(identifier.isKeywordOrIdentifier);
     }
     listener.handleIdentifier(identifier, context);
@@ -3196,14 +3218,10 @@ class Parser {
   /// to use the token as an identifier, even if it isn't a valid identifier.
   Token ensureIdentifierPotentiallyRecovered(
       Token token, IdentifierContext context, bool isRecovered) {
-    // ignore: unnecessary_null_comparison
-    assert(context != null);
     Token identifier = token.next!;
     if (identifier.kind != IDENTIFIER_TOKEN) {
       identifier = context.ensureIdentifierPotentiallyRecovered(
           token, this, isRecovered);
-      // ignore: unnecessary_null_comparison
-      assert(identifier != null);
       assert(identifier.isKeywordOrIdentifier);
     }
     listener.handleIdentifier(identifier, context);
@@ -5466,7 +5484,6 @@ class Parser {
           return parseYieldStatement(token);
 
         case AsyncModifier.Async:
-          reportRecoverableError(token.next!, codes.messageYieldNotGenerator);
           return parseYieldStatement(token);
       }
     } else if (identical(value, 'const')) {
@@ -5512,18 +5529,15 @@ class Parser {
     }
     token = parseExpression(token);
     token = ensureSemicolon(token);
-    if (inPlainSync) {
-      // `yield` is only allowed in generators; A recoverable error is already
-      // reported in the "async" case in `parseStatementX`. Only the "sync" case
-      // needs to be handled here.
+    if (inGenerator) {
+      listener.endYieldStatement(begin, starToken, token);
+    } else {
       codes.MessageCode errorCode = codes.messageYieldNotGenerator;
       reportRecoverableError(begin, errorCode);
       // TODO(srawlins): Add tests in analyzer to ensure the AstBuilder
       //  correctly handles invalid yields, and that the error message is
       //  correctly plumbed through.
       listener.endInvalidYieldStatement(begin, starToken, token, errorCode);
-    } else {
-      listener.endYieldStatement(begin, starToken, token);
     }
     return token;
   }
@@ -7920,7 +7934,6 @@ class Parser {
         typeInfo.isNullable &&
         typeInfo.couldBeExpression) {
       assert(optional('?', token));
-      assert(next.isKeywordOrIdentifier);
       if (!looksLikeName(next)) {
         reportRecoverableError(
             next, codes.templateExpectedIdentifier.withArguments(next));
@@ -8303,6 +8316,10 @@ class Parser {
     assert(optional('(', forToken.next!));
     assert(optional('in', inKeyword) || optional(':', inKeyword));
 
+    if (awaitToken != null && !inAsync) {
+      reportRecoverableError(awaitToken, codes.messageAwaitForNotAsync);
+    }
+
     if (identifier != null) {
       if (!identifier.isIdentifier) {
         // TODO(jensj): This should probably (sometimes) be
@@ -8317,9 +8334,6 @@ class Parser {
           reportRecoverableErrorWithToken(
               identifier.next!, codes.templateUnexpectedToken);
         }
-      } else if (awaitToken != null && !inAsync) {
-        // TODO(danrubel): consider reporting the error on awaitToken
-        reportRecoverableError(inKeyword, codes.messageAwaitForNotAsync);
       }
     }
     listener.beginForInExpression(inKeyword.next!);
@@ -8466,7 +8480,7 @@ class Parser {
         // declaration).
         return true;
       }
-    } else if (token == Keyword.NULL) {
+    } else if (token.keyword == Keyword.NULL) {
       return true;
     }
     // TODO(srawlins): Consider other possibilities for `token` which would
@@ -9649,12 +9663,16 @@ class Parser {
       {int precedence = 1}) {
     assert(precedence >= 1);
     assert(precedence <= SELECTOR_PRECEDENCE);
+    listener.beginPattern(token);
     Token start = token.next!;
     token = parsePrimaryPattern(token, patternContext);
     while (true) {
       Token next = token.next!;
       int tokenLevel = _computePrecedence(next, forPattern: true);
-      if (tokenLevel < precedence) return token;
+      if (tokenLevel < precedence) {
+        listener.endPattern(token);
+        return token;
+      }
       switch (next.lexeme) {
         // castPattern ::= primaryPattern 'as' type
         case 'as':
@@ -9697,6 +9715,7 @@ class Parser {
           break;
         default:
           // Some other operator that doesn't belong in a pattern
+          listener.endPattern(token);
           return token;
       }
       // None of the pattern types handled by the switch above are valid inside
@@ -9774,9 +9793,14 @@ class Parser {
         return parseVariablePattern(token, patternContext);
       case '(':
         // "(" could start a record type (which has to be followed by an
-        // identifier though), e.g. `(int, int) foo`.
-        if (next.endGroup!.next!.isIdentifier) {
-          TypeInfo typeInfo = computeVariablePatternType(token);
+        // identifier (or ? identifier) though), e.g. `(int, int) foo`
+        // or `(int, int)? bar`.
+        Token afterEndGroup = next.endGroup!.next!;
+        if (afterEndGroup.isIdentifier ||
+            (optional("?", afterEndGroup) &&
+                afterEndGroup.next!.isIdentifier)) {
+          TypeInfo typeInfo =
+              computeVariablePatternType(token, /* required = */ true);
           if (typeInfo is ComplexTypeInfo &&
               typeInfo.isRecordType &&
               !typeInfo.recovered) {
@@ -9874,12 +9898,18 @@ class Parser {
       } else if (dot == null) {
         // It's a single identifier.  If it's a wildcard pattern or we're in an
         // irrefutable context, parse it as a variable pattern.
-        if (!patternContext.isRefutable || firstIdentifier.lexeme == '_') {
+        String name = firstIdentifier.lexeme;
+        if (!patternContext.isRefutable || name == '_') {
           // It's a wildcard pattern with no preceding type, so parse it as a
           // variable pattern.
           isLastPatternAllowedInsideUnaryPattern = true;
           return parseVariablePattern(beforeFirstIdentifier, patternContext,
               typeInfo: typeInfo);
+        } else if (illegalPatternIdentifiers.contains(name)) {
+          reportRecoverableError(
+              firstIdentifier,
+              codes.templateIllegalPatternIdentifierName
+                  .withArguments(firstIdentifier));
         }
       }
       // It's not an object pattern so parse it as an expression.
@@ -9963,8 +9993,18 @@ class Parser {
       }
       listener.handleWildcardPattern(keyword, token);
     } else if (inAssignmentPattern && isBareIdentifier) {
+      if (illegalPatternIdentifiers.contains(variableName)) {
+        reportRecoverableError(
+            token,
+            codes.templateIllegalPatternAssignmentVariableName
+                .withArguments(token));
+      }
       listener.handleAssignedVariablePattern(token);
     } else {
+      if (illegalPatternIdentifiers.contains(variableName)) {
+        reportRecoverableError(token,
+            codes.templateIllegalPatternVariableName.withArguments(token));
+      }
       if (isBareIdentifier) {
         listener.handleNoType(token);
       }
@@ -10011,6 +10051,12 @@ class Parser {
         listener.handleRestPattern(dots, hasSubPattern: hasSubPattern);
       } else {
         token = parsePattern(token, patternContext);
+        if (identical(next, token.next)) {
+          // No tokens were consumed (though it's possible that a synthetic
+          // token was inserted). If this happens, go ahead and skip the next
+          // token to ensure that progress is made.
+          token = token.next!;
+        }
       }
       next = token.next!;
       ++count;
@@ -10086,6 +10132,12 @@ class Parser {
               new SyntheticToken(TokenType.COLON, next.charOffset));
         }
         token = parsePattern(colon, patternContext);
+        if (identical(next, token.next)) {
+          // No tokens were consumed (though it's possible that a synthetic
+          // token was inserted). If this happens, go ahead and skip the next
+          // token to ensure that progress is made.
+          token = token.next!;
+        }
         listener.handleMapPatternEntry(colon, token.next!);
       }
       ++count;
@@ -10152,7 +10204,9 @@ class Parser {
         wasValidRecord = true;
         listener.handleNoName(token);
         colon = token = next;
-      } else if (optional(':', next.next!)) {
+      } else if (!optional('(', next) && optional(':', next.next!)) {
+        // We don't allow `next` to be `(` here because
+        // `((:a, :b), :c, :d)` (and similar) is fine.
         // Record with named expression.
         wasRecord = true;
         token = ensureIdentifier(
@@ -10220,6 +10274,9 @@ class Parser {
         listener.handleNoName(token);
         colon = token = next;
       } else if (optional(':', next.next!)) {
+        // This is different from `parseParenthesizedPatternOrRecordPattern`
+        // because this isn't valid because of the missing name:
+        // `var Point((:x, :y), :z) = Point((x: 1, y: 2), 3);`
         token =
             ensureIdentifier(token, IdentifierContext.namedArgumentReference)
                 .next!;
