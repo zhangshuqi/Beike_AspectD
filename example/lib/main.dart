@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:beike_aspectd/aspectd.dart';
+
 // ignore: unused_import
 import 'package:example/hook_example.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +42,6 @@ void injectDemo(List<Observer> observers) {
 class MyApp extends StatelessWidget {
   static String localHostname = '111';
   String field = '222';
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -85,6 +85,7 @@ class MyHomePage extends StatefulWidget {
   @override
   _MyHomePageState createState() => _MyHomePageState(i: 19);
 }
+
 class _MyHomePageState extends State<MyHomePage> {
   int i;
   String s = 'fffff';
@@ -100,7 +101,7 @@ class _MyHomePageState extends State<MyHomePage> {
     print(s);
   }
 
-  void _incrementCounter() {
+  void incrementCounter() {
     setState(() {
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
@@ -114,14 +115,14 @@ class _MyHomePageState extends State<MyHomePage> {
   static void testFunction() {}
 
   void test() {
-    _incrementCounter();
+    incrementCounter();
     _MyHomePageState.testFunction();
   }
 
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
+    // by the incrementCounter method above.
     //
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
@@ -132,7 +133,7 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title??''),
+        title: Text(widget.title ?? ''),
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
@@ -167,6 +168,7 @@ class _MyHomePageState extends State<MyHomePage> {
             GestureDetector(
               child: const Text('onPluginDemo', style: TextStyle(fontSize: 30)),
               onTap: () {
+                incrementCounter();
                 receiver.receiveTapped(5, j: 9);
                 onPluginDemo(4, this);
                 dynamic dynamicO = Receiver();
@@ -198,7 +200,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: () {
           test();
           // Receiver.tap();
-          _incrementCounter();
+          incrementCounter();
         },
         tooltip: 'Increment',
         child: Icon(Icons.add),

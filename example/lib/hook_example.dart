@@ -46,7 +46,6 @@ class FieldInitializerDemo {
 ////    ResizeImage.resizeIfNeeded(100, 50, NetworkImage(src, scale: scale, headers: headers));
 //
 //  }
-
 }
 
 @Aspect()
@@ -56,20 +55,27 @@ class CallDemo {
   CallDemo();
 
 //实例方法
-  @Call("package:example/main.dart", "_MyHomePageState", "-_incrementCounter")
+  @Call("package:example/main.dart", "_MyHomePageState", "-incrementCounter")
   @pragma("vm:entry-point")
   void _incrementCounter4(PointCut pointcut) {
     print('[beike_aspectd]: call instance method2!');
     pointcut.proceed();
+  } //实例方法
+
+  @Call("package:example/main.dart", "_MyHomePageState", "-appInit")
+  @pragma("vm:entry-point")
+  void _appInit(PointCut pointcut) {
+    print('[beike_aspectd]: appInitappInitappInitappInit!');
+    pointcut.proceed();
   }
 
-  // @Call('package:example/main.dart', 'TextRightImageModel', '-.*',
-  //     isRegex: true)
-  // @pragma("vm:entry-point")
-  // dynamic _aop_Two(PointCut pointcut) {
-  //   print('_aop_Two');
-  //   return pointcut.proceed();
-  // }
+// @Call('package:example/main.dart', 'TextRightImageModel', '-.*',
+//     isRegex: true)
+// @pragma("vm:entry-point")
+// dynamic _aop_Two(PointCut pointcut) {
+//   print('_aop_Two');
+//   return pointcut.proceed();
+// }
 
 // //类静态方法
 // @Call("package:example/main.dart", "_MyHomePageState", "+testFunction")
@@ -342,7 +348,6 @@ class AddDemo {
 // void addTestRegular(PointCut pointCut) {
 //   print('Regular add method');
 // }
-
 }
 
 @Aspect()

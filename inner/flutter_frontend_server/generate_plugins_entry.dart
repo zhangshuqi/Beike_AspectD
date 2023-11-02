@@ -7,7 +7,7 @@ RegExp pluginNameExp = RegExp(r'^[a-zA-Z_][a-zA-Z0-9_]*$');
 
 /// This function is used to generate plugins based on configurations specified
 /// in lib/src/plugins/config.yaml.
-int main(List<String> args) {
+int? main(List<String> args) {
   final Directory curDir = Directory(Platform.script.toFilePath());
   final String pluginsFolder =
       p.join(curDir.parent.parent.path, 'lib', 'src', 'plugins');

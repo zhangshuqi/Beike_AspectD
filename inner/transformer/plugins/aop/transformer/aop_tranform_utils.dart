@@ -213,7 +213,7 @@ class AopUtils {
       for (Field field in cls.fields) {
         if (field.name.text == part) {
           final InterfaceType interfaceType = field.type as InterfaceType;
-          cls = interfaceType.className.node as Class;
+          cls = interfaceType.classReference.node as Class;
           break;
         }
       }
@@ -277,20 +277,20 @@ class AopUtils {
     final Arguments pointCutConstructorArguments = Arguments.empty();
     final List<MapLiteralEntry> sourceInfos = <MapLiteralEntry>[];
 
-    sourceInfo?.forEach((String key, String value) {
+    sourceInfo.forEach((String key, String value) {
       sourceInfos
           .add(MapLiteralEntry(StringLiteral(key), StringLiteral(value)));
     });
 
     pointCutConstructorArguments.positional.add(MapLiteral(sourceInfos));
     pointCutConstructorArguments.positional.add(targetExpression);
-    String? memberName = member?.name?.text;
+    String? memberName = member.name.text;
     if (member is Constructor) {
       memberName = AopUtils.nameForConstructor(member);
     }
-    pointCutConstructorArguments.positional.add(StringLiteral(memberName!));
+    pointCutConstructorArguments.positional.add(StringLiteral(memberName));
     pointCutConstructorArguments.positional
-        .add(StringLiteral(stubKey ?? stubKeyDefault));
+        .add(StringLiteral(stubKey));
     pointCutConstructorArguments.positional
         .add(ListLiteral(invocationArguments.positional));
     final List<MapLiteralEntry> entries = <MapLiteralEntry>[];
@@ -308,7 +308,7 @@ class AopUtils {
     }
 
     //Get annotations and members in call/execute mode
-    if (clz != null && clz is Class) {
+    if (clz != null) {
       final ThisExpression thisE = ThisExpression();
       final List<MapLiteralEntry> filedsMap = <MapLiteralEntry>[];
 
@@ -360,7 +360,7 @@ class AopUtils {
       }
 
       //Get annotations of caller
-      final List<Expression>? annotations = clz?.annotations;
+      final List<Expression>? annotations = clz.annotations;
       final List<MapLiteralEntry> annotationMap = <MapLiteralEntry>[];
 
       if (annotations != null) {
@@ -421,7 +421,7 @@ class AopUtils {
     //重定向到AOP的函数体中去
     final Arguments pointCutConstructorArguments = Arguments.empty();
     final List<MapLiteralEntry> sourceInfos = <MapLiteralEntry>[];
-    sourceInfo?.forEach((String key, String value) {
+    sourceInfo.forEach((String key, String value) {
       sourceInfos
           .add(MapLiteralEntry(StringLiteral(key), StringLiteral(value)));
     });
@@ -442,14 +442,14 @@ class AopUtils {
     pointCutConstructorArguments.positional.add(MapLiteral(entries));
 
     Class? clz;
-    if (currrentClass == null && member.parent is Class) {
+    if (member.parent is Class) {
       clz = member.parent as Class;
     } else {
       clz = currrentClass;
     }
 
     //Get annotations and members in call/execute mode
-    if (clz != null && clz is Class) {
+    if (clz != null) {
       final ThisExpression thisE = ThisExpression();
       final List<MapLiteralEntry> filedsMap = <MapLiteralEntry>[];
 
@@ -478,7 +478,7 @@ class AopUtils {
       pointCutConstructorArguments.positional.add(MapLiteral(filedsMap));
 
       //Get annotations of caller
-      final List<Expression>? annotations = clz?.annotations;
+      final List<Expression>? annotations = clz.annotations;
       final List<MapLiteralEntry> annotationMap = <MapLiteralEntry>[];
 
       if (annotations != null) {
@@ -685,7 +685,7 @@ class AopUtils {
               instanceConstant.classReference.canonicalName;
           if (canonicalName != null &&
               canonicalName.name == AopUtils.kAopAnnotationClassAspect &&
-              canonicalName?.parent?.name == AopUtils.kImportUriAopAspect) {
+              canonicalName.parent?.name == AopUtils.kImportUriAopAspect) {
             enabled = true;
             break;
           }
@@ -698,7 +698,7 @@ class AopUtils {
         if (cls == null) {
           continue;
         }
-        final Library library = cls?.parent as Library;
+        final Library library = cls.parent as Library;
         if (cls.name == AopUtils.kAopAnnotationClassAspect &&
             library.importUri.toString() == AopUtils.kImportUriAopAspect) {
           enabled = true;
@@ -734,9 +734,7 @@ class AopUtils {
     }
     sourceInfo.putIfAbsent(
         'importUri',
-        () => (library.importUri.toString() != null)
-            ? (library.importUri.toString())
-            : '');
+        () => library.importUri.toString());
     sourceInfo.putIfAbsent('library', () => importUri);
     sourceInfo.putIfAbsent('file', () => fileUri.toString());
     sourceInfo.putIfAbsent('lineNum', () => '${lineNum + 1}');
@@ -920,7 +918,7 @@ class AopUtils {
         }
       }
     }
-    return namedNodes?.last;
+    return namedNodes.last;
   }
 
   static Class? classOfLib(Library lib, String className) {
