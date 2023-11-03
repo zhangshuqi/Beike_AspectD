@@ -5,6 +5,7 @@ import 'package:beike_aspectd/aspectd.dart';
 // ignore: unused_import
 import 'package:example/hook_example.dart';
 import 'package:flutter/material.dart';
+import 'click_aop_hook.dart';
 
 import 'receiver_test.dart';
 
