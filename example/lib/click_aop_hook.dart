@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:beike_aspectd/aspectd.dart';
 import 'package:flutter/rendering.dart';
 
-import 'hook_impl.dart';
-
 @Aspect()
 @pragma("vm:entry-point")
 class ClickAopHook {
@@ -25,8 +23,7 @@ class ClickAopHook {
         hitTestResult = pointCut.positionalParams![1];
       }
 
-      print(
-          "GestureRecognizer：：：：：invokeCallback---${hitTestResult?.path}");
+      print("GestureRecognizer：：：：：invokeCallback---${hitTestResult?.path}");
       if (hitTestResult != null) {
         if (pointEvent is PointerUpEvent) {
           for (HitTestEntry hitTestEntry in hitTestResult.path) {
@@ -47,10 +44,11 @@ class ClickAopHook {
   dynamic hookInvokeCallback(PointCut pointCut) {
     dynamic result = pointCut.proceed();
     dynamic eventName = pointCut.positionalParams![0];
-    print("GestureRecognizer：：：：：invokeCallback---${eventName}");
     print("GestureRecognizer：：：：：invokeCallback---${pointCut.sourceInfos}");
     print("GestureRecognizer：：：：：invokeCallback---${pointCut.annotations}");
-    HookImpl.getInstance().hookClick(eventName);
+    Map<String, Object> map = HookImpl.getInstance().hookClick(eventName);
+    print("GestureRecognizer：：：：：mapmap---${map}");
+
     return result;
   }
 

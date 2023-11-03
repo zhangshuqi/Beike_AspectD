@@ -40,15 +40,18 @@ class HookImpl {
     CustomLog.d("hookHitTest:::" + hitTestEntry.target.toString());
   }
 
-  void hookClick(String eventName) {
+  Map<String, Object> hookClick(String eventName) {
+    _resetValues();
+
     if (eventName == "onTap") {
       initValues();
       _getElementPath();
       _getElementType();
       _getElementContent();
-      _printClick(elementInfoMap);
-      _resetValues();
+      // _printClick(elementInfoMap);
+      print("_deviceInfoMap=========${elementInfoMap}");
     }
+    return elementInfoMap;
   }
 
   void initValues() {
@@ -122,7 +125,7 @@ class HookImpl {
     // CustomLog.d("_shouldAddToPath:::"+widget.toStringShort());
     if (widget is _CustomHasCreationLocation) {
       _CustomHasCreationLocation creationLocation =
-      widget as _CustomHasCreationLocation;
+          widget as _CustomHasCreationLocation;
       if (creationLocation._customLocation != null) {
         // CustomLog.d(creationLocation._customLocation.toString());
         return creationLocation._customLocation.isProjectRoot();
@@ -196,7 +199,7 @@ class HookImpl {
   void _printClick(Map<String, Object> otherData) {
     String result = "";
     result +=
-    "\n==========================================Clicked========================================\n";
+        "\n==========================================Clicked========================================\n";
     _deviceInfoMap.forEach((key, value) {
       result += "$key: $value\n";
     });
@@ -205,7 +208,7 @@ class HookImpl {
     });
     result += "time: ${DateTime.now().toString()}\n";
     result +=
-    "=========================================================================================";
+        "=========================================================================================";
     CustomLog.i(result);
   }
 

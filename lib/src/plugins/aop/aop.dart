@@ -5,3 +5,4 @@ export 'annotation/inject.dart';
 export 'annotation/pointcut.dart';
 export 'beike_annotation/add.dart';
 export 'beike_annotation/field_get.dart';
+export 'hook_click/hook_impl.dart';
