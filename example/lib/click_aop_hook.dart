@@ -43,12 +43,10 @@ class ClickAopHook {
   @pragma("vm:entry-point")
   dynamic hookInvokeCallback(PointCut pointCut) {
     dynamic result = pointCut.proceed();
-    dynamic eventName = pointCut.positionalParams![0];
     print("GestureRecognizer：：：：：invokeCallback---${pointCut.sourceInfos}");
     print("GestureRecognizer：：：：：invokeCallback---${pointCut.annotations}");
-    Map<String, Object> map = HookImpl.getInstance().hookClick(eventName);
+    Map<String, Object> map = HookImpl.getInstance().hookClick(pointCut);
     print("GestureRecognizer：：：：：mapmap---${map}");
-
     return result;
   }
 

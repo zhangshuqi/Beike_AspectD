@@ -5,6 +5,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
+import '../aop.dart';
+
 @pragma("vm:entry-point")
 class HookImpl {
   static final _instance = HookImpl._();
@@ -40,7 +42,9 @@ class HookImpl {
     CustomLog.d("hookHitTest:::" + hitTestEntry.target.toString());
   }
 
-  Map<String, Object> hookClick(String eventName) {
+  Map<String, Object> hookClick(PointCut pointCut) {
+    dynamic eventName = pointCut.positionalParams![0];
+
     _resetValues();
 
     if (eventName == "onTap") {
