@@ -23,8 +23,8 @@ class AopClickEventHook {
         hitTestResult = pointCut.positionalParams![1];
       }
 
-      debugPrint(
-          "GestureRecognizer：：：：：invokeCallback---${hitTestResult?.path}");
+      // debugPrint(
+      //     "GestureRecognizer：：：：：invokeCallback---${hitTestResult?.path}");
       if (hitTestResult != null) {
         if (pointEvent is PointerUpEvent) {
           for (HitTestEntry hitTestEntry in hitTestResult.path) {
@@ -44,12 +44,11 @@ class AopClickEventHook {
   @pragma("vm:entry-point")
   dynamic hookInvokeCallback(PointCut pointCut) {
     dynamic result = pointCut.proceed();
-    debugPrint(
+/*    debugPrint(
         "GestureRecognizer：：：：：invokeCallback---${pointCut.sourceInfos}");
     debugPrint(
-        "GestureRecognizer：：：：：invokeCallback---${pointCut.annotations}");
+        "GestureRecognizer：：：：：invokeCallback---${pointCut.annotations}");*/
     Map<String, Object> map = HookImpl.getInstance().hookClick(pointCut);
-    debugPrint("GestureRecognizer：：：：：mapmap---${map}");
     return result;
   }
 

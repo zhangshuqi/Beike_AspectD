@@ -1,5 +1,5 @@
 import 'hook/aop_click_event_hook.dart';
-import 'hook/aop_navigator_event_hook.dart';
+// import 'hook/aop_navigator_event_hook.dart';
 export 'annotation/aspect.dart';
 export 'annotation/call.dart';
 export 'annotation/execute.dart';

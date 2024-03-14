@@ -9,7 +9,7 @@ class RouteHelper {
   ///主模块
   static const String firstPage = 'first';
   static const String secondPage = 'second';
-  static const String main = '/';
+  static const String main = '/main';
 
   ///路由与页面绑定注册
   static Map<String, WidgetBuilder> routes = {

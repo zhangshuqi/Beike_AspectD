@@ -11,11 +11,12 @@ class AopNavigatorEventHook {
       "package:flutter/src/widgets/navigator.dart", "_RouteEntry", "-handleAdd")
   @pragma("vm:entry-point")
   void _handleAdd(PointCut pointCut) {
-    print("++++_handleAdd++++");
+    debugPrint("++++_handleAdd++++");
+    pointCut.proceed();
+
     if (pointCut.namedParams != null) {
       dynamic target = pointCut.target;
-      Route ? previousRoute = pointCut.namedParams!["previousPresent"];
-      pointCut.proceed();
+      Route? previousRoute = pointCut.namedParams!["previousPresent"];
       HookImpl.getInstance().handlePush(target.route, previousRoute);
     }
   }
@@ -24,10 +25,10 @@ class AopNavigatorEventHook {
       "-handlePush")
   @pragma("vm:entry-point")
   void _handlePush(PointCut pointCut) {
-    print("++++_handlePush++++");
+    debugPrint("++++_handlePush++++");
     pointCut.proceed();
     dynamic target = pointCut.target;
-    Route ?previousRoute = pointCut.namedParams?["previousPresent"];
+    Route? previousRoute = pointCut.namedParams?["previousPresent"];
     HookImpl.getInstance().handlePush(target.route, previousRoute);
   }
 
@@ -35,23 +36,24 @@ class AopNavigatorEventHook {
       "-handleDrawFrame")
   @pragma("vm:entry-point")
   void _handleDrawFrame(PointCut pointCut) {
-    print("++++_handleDrawFrame++++");
+    //debugPrint("++++_handleDrawFrame++++");
     pointCut.proceed();
-    HookImpl.getInstance().handleDrawFrame();
+   // HookImpl.getInstance().handleDrawFrame();
   }
 
   @Execute("package:flutter/src/material/page.dart",
       "MaterialRouteTransitionMixin", "-buildPage")
   @pragma("vm:entry-point")
   dynamic _buildPage(PointCut pointCut) {
-    print("++++_buildPage++++");
+    dynamic pointCutProceed = pointCut.proceed();
+
+    debugPrint("++++_buildPage++++");
     if (pointCut.positionalParams == null ||
         pointCut.target == null ||
         !(pointCut.target is Route)) {
-      return pointCut.proceed();
+      return pointCutProceed;
     }
     Route target = pointCut.target as Route;
-    dynamic pointCutProceed = pointCut.proceed();
     if (pointCutProceed != null && pointCutProceed is Semantics) {
       HookImpl.getInstance().buildPage(
           target, pointCutProceed.child, pointCut.positionalParams![0]);
@@ -64,13 +66,14 @@ class AopNavigatorEventHook {
       "CupertinoRouteTransitionMixin", "-buildPage")
   @pragma("vm:entry-point")
   dynamic _cupertinoBuildPage(PointCut pointCut) {
+    dynamic pointCutProceed = pointCut.proceed();
+
     if (pointCut.positionalParams == null ||
         pointCut.target == null ||
         !(pointCut.target is Route)) {
-      return pointCut.proceed();
+      return pointCutProceed;
     }
     Route target = pointCut.target as Route;
-    dynamic pointCutProceed = pointCut.proceed();
     if (pointCutProceed != null && pointCutProceed is Semantics) {
       HookImpl.getInstance().buildPage(
           target, pointCutProceed.child, pointCut.positionalParams![0]);
@@ -82,21 +85,19 @@ class AopNavigatorEventHook {
   @Execute(
       "package:flutter/src/widgets/navigator.dart", "_RouteEntry", "-handlePop")
   @pragma("vm:entry-point")
-  void _handlePop(PointCut pointCut) {
-    print("++++handlePop++++");
-    if (pointCut.namedParams != null) {
-      dynamic target = pointCut.target;
-      dynamic previousPresent = pointCut.namedParams!["previousPresent"];
-      pointCut.proceed();
-      HookImpl.getInstance().handlePop(target.route, previousPresent);
-    }
+  _handlePop(PointCut pointCut) {
+    debugPrint("++++handlePop++++");
+    dynamic target = pointCut.target;
+    Route? previousPresent = pointCut.namedParams?["previousPresent"];
+    HookImpl.getInstance().handlePop(target?.route, previousPresent);
+    return pointCut.proceed();
   }
 
   @Execute("package:lifecycle_detect/lifecycle_detect.dart", "LifecycleDetect",
       "-onActivityResumed")
   @pragma("vm:entry-point")
   void _onActivityResumed(PointCut pointCut) {
-    print("++++onActivityResumed++++");
+    debugPrint("++++onActivityResumed++++");
     pointCut.proceed();
     HookImpl.getInstance().onActivityResumed();
   }
@@ -105,7 +106,7 @@ class AopNavigatorEventHook {
       "-onActivityPaused")
   @pragma("vm:entry-point")
   void _onActivityPaused(PointCut pointCut) {
-    print("++++onActivityPaused++++");
+    debugPrint("++++onActivityPaused++++");
     pointCut.proceed();
     HookImpl.getInstance().onActivityPaused();
   }

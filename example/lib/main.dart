@@ -13,15 +13,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        key: GlobalKey(),
-        title: 'Flutter Demo',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
-        home: MyHomePage(title: 'Flutter Demo Home Page'),
-        // routes: RouteHelper.routes,
-        onGenerateRoute: (RouteSettings settings) {
+      key: GlobalKey(),
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      routes: RouteHelper.routes,
+      initialRoute: RouteHelper.main,
+/*        onGenerateRoute: (RouteSettings settings) {
           print("onGenerateRoute+++++++");
           return MaterialPageRoute<dynamic>(
               builder: (BuildContext context) {
@@ -29,12 +29,14 @@ class MyApp extends StatelessWidget {
                 return RouteHelper.routes[settings.name]!(context);
               },
               settings: settings);
-        });
+        }*/
+    );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({required this.title}) ;
+  MyHomePage({required this.title});
+
   final String title;
 
   @override

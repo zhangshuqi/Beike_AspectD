@@ -33,10 +33,7 @@ class HookImpl {
   Route? _popRoute;
   Route? _popPreviousRoot;
   Route? _buildPageRoute;
-  Widget? _buildPageWidget;
   BuildContext? _buildPageContext;
-
-  var _routePageMap = <Route, PageEvent>{};
 
   void hookHitTest(HitTestEntry entry, PointerEvent event) {
     hitTestEntry = entry;
@@ -55,6 +52,8 @@ class HookImpl {
       _getElementContent();
       // _debugPrintClick(elementInfoMap);
       debugPrint("_deviceInfoMap=========${elementInfoMap}");
+      debugPrint(
+          "router==Info=======_targetRoute==$_targetRoute==_popRoute===$_popRoute====_popPreviousRoot==$_popPreviousRoot===");
     }
     return elementInfoMap;
   }
@@ -207,9 +206,22 @@ class HookImpl {
     if (route != null && route is PageRoute) {
       _targetRoute = route;
     }
-    if (previousRoute != null) {
-      LifecycleDetect.getInstance()
-          .onResume(previousRoute.settings.name, false);
+    if (previousRoute != null && previousRoute is PageRoute) {
+      _popRoute = previousRoute;
+    }
+    if (route != null) {
+      LifecycleDetect.getInstance().onResume(route.settings.name, false);
+    }
+  }
+
+  void handlePop(Route? route, Route? previousRoute) {
+    CustomLog.i(
+        "handlePop====route:$route  previousRoute:$previousRoute====${route is PageRoute}");
+    if (route is PageRoute) {
+      _popRoute = route;
+      //_popPreviousRoot = previousRoute;
+      _targetRoute = previousRoute;
+      LifecycleDetect.getInstance().onPause(route.settings.name, false);
     }
   }
 
@@ -218,43 +230,16 @@ class HookImpl {
       return;
     }
     _buildPageRoute = route;
-    _buildPageWidget = widget;
     _buildPageContext = context;
     CustomLog.i("buildPage====route:$route  widget:$widget  context:$context");
   }
 
-  void handleDrawFrame() {
-    if (_popRoute != null && _popPreviousRoot != null) {
-      LifecycleDetect.getInstance()
-          .onResume(_popPreviousRoot?.settings.name, false);
-      _resetField();
-      _popRoute = null;
-      _popPreviousRoot = null;
-      this._buildPageRoute = null;
-      return;
-    }
-
-    if (_buildPageContext != null && _targetRoute != null) {
-      LifecycleDetect.getInstance()
-          .onResume(_targetRoute?.settings.name, false);
-      _resetField();
-    }
-  }
+  void handleDrawFrame() {}
 
   void _resetField() {
     this._targetRoute = null;
-    this._buildPageWidget = null;
     this._buildPageContext = null;
     contentList.clear();
-  }
-
-  void handlePop(Route route, Route previousRoute) {
-    CustomLog.i("handlePop====route:$route  previousRoute:$previousRoute");
-    if (route is PageRoute) {
-      _popRoute = route;
-      _popPreviousRoot = previousRoute;
-      LifecycleDetect.getInstance().onPause(route.settings.name, false);
-    }
   }
 
   void onActivityResumed() {
