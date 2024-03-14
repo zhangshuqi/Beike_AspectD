@@ -44,7 +44,7 @@ class AopExecuteImplTransformer extends Transformer {
         }
       }
     } else {
-      final Library library = libraryMap[aopItemInfo.importUri]!;
+      final Library? library = libraryMap[aopItemInfo.importUri];
       if (library != null) {
         filteredLibraries.add(library);
       }

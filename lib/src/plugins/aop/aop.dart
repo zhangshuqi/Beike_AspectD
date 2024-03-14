@@ -1,3 +1,5 @@
+import 'hook/aop_click_event_hook.dart';
+import 'hook/aop_navigator_event_hook.dart';
 export 'annotation/aspect.dart';
 export 'annotation/call.dart';
 export 'annotation/execute.dart';
@@ -5,4 +7,7 @@ export 'annotation/inject.dart';
 export 'annotation/pointcut.dart';
 export 'beike_annotation/add.dart';
 export 'beike_annotation/field_get.dart';
-export 'hook_click/hook_impl.dart';
+export 'hook/hook_impl.dart';
+export 'lifecycle/lifecycle_detect.dart';
+export 'hook/aop_click_event_hook.dart';
+export 'hook/aop_navigator_event_hook.dart';
