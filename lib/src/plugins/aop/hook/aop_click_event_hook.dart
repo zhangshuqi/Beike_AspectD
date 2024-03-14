@@ -39,18 +39,18 @@ class AopClickEventHook {
     return pointCut.proceed();
   }
 
-  @Execute("package:flutter/src/gestures/recognizer.dart", "GestureRecognizer",
+/*  @Execute("package:flutter/src/gestures/recognizer.dart", "GestureRecognizer",
       "-invokeCallback")
   @pragma("vm:entry-point")
   dynamic hookInvokeCallback(PointCut pointCut) {
     dynamic result = pointCut.proceed();
-/*    debugPrint(
+*//*    debugPrint(
         "GestureRecognizer：：：：：invokeCallback---${pointCut.sourceInfos}");
     debugPrint(
-        "GestureRecognizer：：：：：invokeCallback---${pointCut.annotations}");*/
+        "GestureRecognizer：：：：：invokeCallback---${pointCut.annotations}");*//*
     Map<String, Object> map = HookImpl.getInstance().hookClick(pointCut);
     return result;
-  }
+  }*/
 
   @Execute("package:flutter/src/widgets/framework.dart", "RenderObjectElement",
       "-mount")

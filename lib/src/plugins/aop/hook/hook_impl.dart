@@ -21,7 +21,7 @@ class HookImpl {
 
   factory HookImpl.getInstance() => _instance;
 
-  late HitTestEntry hitTestEntry;
+  HitTestEntry? hitTestEntry;
   var elementInfoMap = <String, Object>{};
   bool searchStop = false;
 
@@ -37,10 +37,13 @@ class HookImpl {
 
   void hookHitTest(HitTestEntry entry, PointerEvent event) {
     hitTestEntry = entry;
-    CustomLog.d("hookHitTest:::" + hitTestEntry.target.toString());
+    CustomLog.d("hookHitTest:::" + hitTestEntry!.target.toString());
   }
 
   Map<String, Object> hookClick(PointCut pointCut) {
+    if (hitTestEntry == null) {
+      return {};
+    }
     dynamic eventName = pointCut.positionalParams![0];
 
     _resetValues();
@@ -70,7 +73,10 @@ class HookImpl {
   }
 
   void _getElementContent() {
-    RenderObject renderObject = hitTestEntry.target as RenderObject;
+    if (hitTestEntry == null) {
+      return;
+    }
+    RenderObject renderObject = hitTestEntry?.target as RenderObject;
     DebugCreator? debugCreator = renderObject.debugCreator as DebugCreator;
     Element element = debugCreator.element;
 
@@ -127,8 +133,11 @@ class HookImpl {
   }
 
   void _getElementPath() {
+    if (hitTestEntry == null) {
+      return;
+    }
     var listResult = <String>[];
-    RenderObject renderObject = hitTestEntry.target as RenderObject;
+    RenderObject renderObject = hitTestEntry?.target as RenderObject;
     DebugCreator? debugCreator = renderObject.debugCreator as DebugCreator;
     Element element = debugCreator.element;
     if (_shouldAddToPath(element)) {
@@ -309,15 +318,15 @@ class PageEvent {
 }
 
 class CustomLog {
-  static void d(String str) {
+  static void d(String? str) {
     debugPrint("CustomLog:::::ddddd:::::$str");
   }
 
-  static void i(String str) {
+  static void i(String? str) {
     debugPrint("CustomLog:::::iiiii:::::$str");
   }
 
-  static void w(String str) {
+  static void w(String? str) {
     debugPrint("CustomLog:::::wwwww:::::$str");
   }
 }
