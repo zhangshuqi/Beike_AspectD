@@ -1,23 +1,17 @@
 import 'dart:io';
 
-import 'package:beike_aspectd/src/plugins/aop/lifecycle/lifecycle_detect.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 import '../aop.dart';
+
+typedef ElementContentCallback = String Function(Widget widget);
 
 @pragma("vm:entry-point")
 class HookImpl {
   static final _instance = HookImpl._();
 
-  var _deviceInfoMap = <String, Object>{};
-
-  HookImpl._() {
-    _deviceInfoMap["os"] = Platform.operatingSystem;
-    _deviceInfoMap["os_version"] = Platform.operatingSystemVersion;
-  }
+  HookImpl._();
 
   factory HookImpl.getInstance() => _instance;
 
@@ -38,6 +32,12 @@ class HookImpl {
   void hookHitTest(HitTestEntry entry, PointerEvent event) {
     hitTestEntry = entry;
     CustomLog.d("hookHitTest:::" + hitTestEntry!.target.toString());
+  }
+
+  ElementContentCallback? elementContentCallback;
+
+  void addElementContentCallback(ElementContentCallback callback) {
+    elementContentCallback = callback;
   }
 
   Map<String, Object> hookClick(PointCut pointCut) {
@@ -76,38 +76,14 @@ class HookImpl {
     if (hitTestEntry == null) {
       return;
     }
-    RenderObject renderObject = hitTestEntry?.target as RenderObject;
-    DebugCreator? debugCreator = renderObject.debugCreator as DebugCreator;
-    Element element = debugCreator.element;
-
-    late Element finalContainerElement;
-    element.visitAncestorElements((element) {
-      finalContainerElement = element;
-      return false;
-    });
-
-    if ((element.widget is Text || element.widget is RichText)) {
-      finalContainerElement = element;
-    }
-
-    _getElementContentByType(finalContainerElement);
-    if (contentList.isNotEmpty) {
-      String result = contentList.join("-");
-      elementInfoMap["element_content"] = result;
-    }
+    Element finalContainerElement = elementPathList[0];
+    elementInfoMap["element_content"] =
+        getElementContent(finalContainerElement.widget) ?? "unknown";
   }
 
-  void _getElementContentByType(Element? element) {
-    if (element != null) {
-      String tmp = getTextFromWidget(element.widget);
-      contentList.add(tmp);
-
-      // element.visitChildElements(_getElementContentByType);
-    }
-  }
-
-  String getTextFromWidget(Widget widget) {
+  String? getElementContent(Widget widget) {
     String? result;
+    CustomLog.d("widget===${widget.runtimeType.toString()}");
     if (widget is Text) {
       result = widget.data;
     } else if (widget is Tab) {
@@ -115,7 +91,10 @@ class HookImpl {
     } else if (widget is IconButton) {
       result = widget.tooltip ?? "";
     }
-    return result ?? "unknown";
+    if (elementContentCallback != null) {
+      result = elementContentCallback!(widget);
+    }
+    return result;
   }
 
   bool _shouldAddToPath(Element element) {
@@ -189,33 +168,11 @@ class HookImpl {
 
   void _getElementType() {
     if (elementPathList.isEmpty) {
+      elementInfoMap["element_type"] = "unknown";
       return;
     }
-    String? elementTypeResult;
-
-    for (Element element in elementPathList) {
-      Widget widget = element.widget;
-      elementTypeResult = widget.runtimeType.toString();
-    }
-
-    elementInfoMap["element_type"] =
-        elementTypeResult ?? "_getElementType error";
-  }
-
-  void _debugPrintClick(Map<String, Object> otherData) {
-    String result = "";
-    result +=
-        "\n==========================================Clicked========================================\n";
-    _deviceInfoMap.forEach((key, value) {
-      result += "$key: $value\n";
-    });
-    otherData?.forEach((key, value) {
-      result += "$key: $value\n";
-    });
-    result += "time: ${DateTime.now().toString()}\n";
-    result +=
-        "=========================================================================================";
-    CustomLog.i(result);
+    Element element = elementPathList[0];
+    elementInfoMap["element_type"] = element.widget.runtimeType.toString();
   }
 
   void handlePush(Route? route, Route? previousRoute) {
