@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../aop.dart';
 
-typedef ElementContentCallback = String Function(Widget widget);
+typedef ElementContentCallback = String? Function(Widget widget);
 
 @pragma("vm:entry-point")
 class HookImpl {
