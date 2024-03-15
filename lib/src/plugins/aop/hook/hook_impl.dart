@@ -159,13 +159,10 @@ class HookImpl {
     if (finalResult.startsWith('/')) {
       finalResult = finalResult.replaceFirst('/', '');
     }
-    String listSlotResult = "";
-    listSlot.reversed.forEach((element) {
-      listSlotResult += element.toString();
-    });
+
     elementInfoMap["element_path"] = finalResult;
-    elementInfoMap["element_slot"] = listSlotResult;
-    elementInfoMap["widget_name"] = widgetNames;
+    elementInfoMap["element_slot"] = listSlot.reversed;
+    elementInfoMap["widget_name"] = widgetNames.reversed;
   }
 
   void _getElementType() {
