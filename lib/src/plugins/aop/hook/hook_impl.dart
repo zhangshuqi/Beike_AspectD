@@ -116,36 +116,37 @@ class HookImpl {
       return;
     }
     var listResult = <String>[];
+    var widgetNames = <String>[];
     var listSlot = <int>[];
     RenderObject renderObject = hitTestEntry?.target as RenderObject;
     DebugCreator? debugCreator = renderObject.debugCreator as DebugCreator;
     Element element = debugCreator.element;
     if (_shouldAddToPath(element)) {
-      var result = "${element.widget.runtimeType.toString()}";
+      var widgetName = element.widget.runtimeType.toString();
       int slot = 0;
       if (element.slot != null) {
         if (element.slot is IndexedSlot) {
           slot = (element.slot as IndexedSlot).index;
         }
       }
-      result += "[$slot]";
-      listResult.add(result);
+      widgetNames.add(widgetName);
+      listResult.add("$widgetName[$slot]");
       listSlot.add(slot);
       elementPathList.add(element);
     }
 
     element.visitAncestorElements((element) {
       if (_shouldAddToPath(element)) {
-        var result = "${element.widget.runtimeType.toString()}";
+        var widgetName = element.widget.runtimeType.toString();
         int slot = 0;
         if (element.slot != null) {
           if (element.slot is IndexedSlot) {
             slot = (element.slot as IndexedSlot).index;
           }
         }
-        result += "[$slot]";
+        widgetNames.add(widgetName);
+        listResult.add("$widgetName[$slot]");
         listSlot.add(slot);
-        listResult.add(result);
         elementPathList.add(element);
       }
       return true;
@@ -164,6 +165,7 @@ class HookImpl {
     });
     elementInfoMap["element_path"] = finalResult;
     elementInfoMap["element_slot"] = listSlotResult;
+    elementInfoMap["widget_name"] = widgetNames;
   }
 
   void _getElementType() {
