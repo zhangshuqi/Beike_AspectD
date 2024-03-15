@@ -93,7 +93,7 @@ class HookImpl {
     _getElementContentByType(finalContainerElement);
     if (contentList.isNotEmpty) {
       String result = contentList.join("-");
-      elementInfoMap[r"$element_content"] = result;
+      elementInfoMap["element_content"] = result;
     }
   }
 
@@ -137,6 +137,7 @@ class HookImpl {
       return;
     }
     var listResult = <String>[];
+    var listSlot = <int>[];
     RenderObject renderObject = hitTestEntry?.target as RenderObject;
     DebugCreator? debugCreator = renderObject.debugCreator as DebugCreator;
     Element element = debugCreator.element;
@@ -150,6 +151,7 @@ class HookImpl {
       }
       result += "[$slot]";
       listResult.add(result);
+      listSlot.add(slot);
       elementPathList.add(element);
     }
 
@@ -163,6 +165,7 @@ class HookImpl {
           }
         }
         result += "[$slot]";
+        listSlot.add(slot);
         listResult.add(result);
         elementPathList.add(element);
       }
@@ -176,7 +179,12 @@ class HookImpl {
     if (finalResult.startsWith('/')) {
       finalResult = finalResult.replaceFirst('/', '');
     }
-    elementInfoMap[r"$element_path"] = finalResult;
+    String listSlotResult = "";
+    listSlot.reversed.forEach((element) {
+      listSlotResult += element.toString();
+    });
+    elementInfoMap["element_path"] = finalResult;
+    elementInfoMap["element_slot"] = listSlotResult;
   }
 
   void _getElementType() {
@@ -190,7 +198,7 @@ class HookImpl {
       elementTypeResult = widget.runtimeType.toString();
     }
 
-    elementInfoMap[r"$element_type"] =
+    elementInfoMap["element_type"] =
         elementTypeResult ?? "_getElementType error";
   }
 

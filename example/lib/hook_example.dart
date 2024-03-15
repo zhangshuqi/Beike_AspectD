@@ -1,4 +1,5 @@
 import 'package:beike_aspectd/aspectd.dart';
+import 'package:flutter/material.dart';
 
 @Aspect()
 @pragma("vm:entry-point")
@@ -67,6 +68,19 @@ class CallDemo {
   void _appInit(PointCut pointcut) {
     print('[beike_aspectd]: appInitappInitappInitappInit!');
     pointcut.proceed();
+  }
+
+  @Execute("package:flutter/src/gestures/recognizer.dart", "GestureRecognizer",
+      "-invokeCallback")
+  @pragma("vm:entry-point")
+  dynamic hookInvokeCallback(PointCut pointCut) {
+    dynamic result = pointCut.proceed();
+
+
+    Map<String, Object> map = HookImpl.getInstance().hookClick(pointCut);
+    debugPrint(
+        "GestureRecognizer：：：：：hookInvokeCallback---${map}");
+    return result;
   }
 
 // @Call('package:example/main.dart', 'TextRightImageModel', '-.*',

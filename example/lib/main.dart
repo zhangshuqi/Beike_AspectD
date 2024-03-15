@@ -2,7 +2,7 @@ import 'package:beike_aspectd/aspectd.dart';
 import 'package:example/route_helper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
+import 'hook_example.dart';
 void main() {
   runApp(MyApp());
   LifecycleDetect.getInstance().init();
