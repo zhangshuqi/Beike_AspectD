@@ -161,8 +161,8 @@ class HookImpl {
     }
 
     elementInfoMap["element_path"] = finalResult;
-    elementInfoMap["element_slot"] = listSlot.reversed;
-    elementInfoMap["widget_name"] = widgetNames.reversed;
+    elementInfoMap["element_slot"] = listSlot.reversed.toList();
+    elementInfoMap["widget_name"] = widgetNames.reversed.toList();
   }
 
   void _getElementType() {
