@@ -116,8 +116,8 @@ class HookImpl {
       return;
     }
     var listResult = <String>[];
-    var widgetNames = <String>[];
-    var listSlot = <int>[];
+    List<String> widgetNames = List.empty();
+    List<int> listSlot = List.empty();
     RenderObject renderObject = hitTestEntry?.target as RenderObject;
     DebugCreator? debugCreator = renderObject.debugCreator as DebugCreator;
     Element element = debugCreator.element;
