@@ -283,14 +283,14 @@ class PageEvent {
 
 class CustomLog {
   static void d(String? str) {
-    debugPrint("CustomLog:::::ddddd:::::$str");
+    //debugPrint("CustomLog:::::ddddd:::::$str");
   }
 
   static void i(String? str) {
-    debugPrint("CustomLog:::::iiiii:::::$str");
+   // debugPrint("CustomLog:::::iiiii:::::$str");
   }
 
   static void w(String? str) {
-    debugPrint("CustomLog:::::wwwww:::::$str");
+    //debugPrint("CustomLog:::::wwwww:::::$str");
   }
 }

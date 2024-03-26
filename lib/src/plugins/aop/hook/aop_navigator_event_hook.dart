@@ -11,7 +11,7 @@ class AopNavigatorEventHook {
       "package:flutter/src/widgets/navigator.dart", "_RouteEntry", "-handleAdd")
   @pragma("vm:entry-point")
   void _handleAdd(PointCut pointCut) {
-    debugPrint("++++_handleAdd++++");
+    //debugPrint("++++_handleAdd++++");
     pointCut.proceed();
 
     if (pointCut.namedParams != null) {
@@ -25,7 +25,7 @@ class AopNavigatorEventHook {
       "-handlePush")
   @pragma("vm:entry-point")
   void _handlePush(PointCut pointCut) {
-    debugPrint("++++_handlePush++++");
+  //  debugPrint("++++_handlePush++++");
     pointCut.proceed();
     dynamic target = pointCut.target;
     Route? previousRoute = pointCut.namedParams?["previousPresent"];
@@ -47,7 +47,7 @@ class AopNavigatorEventHook {
   dynamic _buildPage(PointCut pointCut) {
     dynamic pointCutProceed = pointCut.proceed();
 
-    debugPrint("++++_buildPage++++");
+   // debugPrint("++++_buildPage++++");
     if (pointCut.positionalParams == null ||
         pointCut.target == null ||
         !(pointCut.target is Route)) {
@@ -86,7 +86,7 @@ class AopNavigatorEventHook {
       "package:flutter/src/widgets/navigator.dart", "_RouteEntry", "-handlePop")
   @pragma("vm:entry-point")
   _handlePop(PointCut pointCut) {
-    debugPrint("++++handlePop++++");
+  //  debugPrint("++++handlePop++++");
     dynamic target = pointCut.target;
     Route? previousPresent = pointCut.namedParams?["previousPresent"];
     HookImpl.getInstance().handlePop(target?.route, previousPresent);
@@ -97,7 +97,7 @@ class AopNavigatorEventHook {
       "-onActivityResumed")
   @pragma("vm:entry-point")
   void _onActivityResumed(PointCut pointCut) {
-    debugPrint("++++onActivityResumed++++");
+   // debugPrint("++++onActivityResumed++++");
     pointCut.proceed();
     HookImpl.getInstance().onActivityResumed();
   }
@@ -106,7 +106,7 @@ class AopNavigatorEventHook {
       "-onActivityPaused")
   @pragma("vm:entry-point")
   void _onActivityPaused(PointCut pointCut) {
-    debugPrint("++++onActivityPaused++++");
+   // debugPrint("++++onActivityPaused++++");
     pointCut.proceed();
     HookImpl.getInstance().onActivityPaused();
   }
