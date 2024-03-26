@@ -54,9 +54,9 @@ class HookImpl {
       _getElementType();
       _getElementContent();
       // _debugPrintClick(elementInfoMap);
-      debugPrint("_deviceInfoMap=========${elementInfoMap}");
-      debugPrint(
-          "router==Info=======_targetRoute==$_targetRoute==_popRoute===$_popRoute====_popPreviousRoot==$_popPreviousRoot===");
+      //  debugPrint("_deviceInfoMap=========${elementInfoMap}");
+      //   debugPrint(
+      //         "router==Info=======_targetRoute==$_targetRoute==_popRoute===$_popRoute====_popPreviousRoot==$_popPreviousRoot===");
     }
     return elementInfoMap;
   }
@@ -287,7 +287,7 @@ class CustomLog {
   }
 
   static void i(String? str) {
-   // debugPrint("CustomLog:::::iiiii:::::$str");
+    // debugPrint("CustomLog:::::iiiii:::::$str");
   }
 
   static void w(String? str) {
