@@ -37,7 +37,7 @@ class AopNavigatorEventHook {
   @pragma("vm:entry-point")
   void _handleDrawFrame(PointCut pointCut) {
     //debugPrint("++++_handleDrawFrame++++");
-    pointCut.proceed();
+    //pointCut.proceed();
    // HookImpl.getInstance().handleDrawFrame();
   }
 
